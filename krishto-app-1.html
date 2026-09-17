@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krishto — बक्सर की स्मार्ट डिलीवरी ऐप</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0E14;
+  --surface:#141926;
+  --surface2:#1C2333;
+  --accent:#FF7A45;
+  --accent-dark:#E35F2B;
+  --teal:#17D9B4;
+  --text:#F1F3F8;
+  --text-soft:#8B93A7;
+  --border:#262C3D;
+  --danger:#FF5470;
+  --radius:16px;
+}
+:root[data-theme="light"]{
+  --bg:#F6F5F2;
+  --surface:#FFFFFF;
+  --surface2:#EFEEE9;
+  --text:#141522;
+  --text-soft:#666B7A;
+  --border:#E4E2DA;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;font-weight:700;margin:0;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font-family:inherit;}
+img{max-width:100%;display:block;}
+.app{max-width:480px;margin:0 auto;position:relative;min-height:100vh;background:var(--bg);padding-bottom:76px;}
+@media(min-width:520px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border);}}
+
+/* ---------------- splash ---------------- */
+#splash{
+  position:fixed;inset:0;background:linear-gradient(160deg,#0B0E14,#1A1030 60%,#2A1608);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;transition:opacity .5s ease, visibility .5s;
+}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-mark{
+  font-family:'Space Grotesk';font-weight:700;font-size:42px;color:var(--accent);
+  animation:splashPop .7s cubic-bezier(.2,1.4,.4,1) both;
+}
+.splash-sub{color:var(--text-soft);font-size:13px;margin-top:8px;letter-spacing:1px;animation:fadeIn .6s .3s both;}
+.splash-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;margin:0 3px;animation:dotPulse 1.2s infinite;}
+.splash-dot:nth-child(2){animation-delay:.15s;}
+.splash-dot:nth-child(3){animation-delay:.3s;}
+.splash-dots{margin-top:18px;}
+@keyframes splashPop{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.08);opacity:1;}100%{transform:scale(1);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes dotPulse{0%,100%{opacity:.25;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
+@media (prefers-reduced-motion: reduce){
+  #splash{transition:none;} .splash-mark,.splash-sub{animation:none;} .splash-dot{animation:none;}
+}
+
+/* ---------------- top bar ---------------- */
+.topbar{
+  position:sticky;top:0;z-index:40;background:rgba(11,14,20,0.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);padding:14px 16px 10px;
+}
+:root[data-theme="light"] .topbar{background:rgba(246,245,242,0.92);}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand-mark{
+  width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;color:#fff;font-size:16px;
+}
+.brand-name{font-family:'Space Grotesk';font-weight:700;font-size:18px;}
+.icon-btn{
+  width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:17px;position:relative;
+}
+.badge{
+  position:absolute;top:-5px;right:-5px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;
+  min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;
+  transition:transform .2s;
+}
+.badge.bump{animation:bump .35s ease;}
+@keyframes bump{0%{transform:scale(1);}40%{transform:scale(1.5);}100%{transform:scale(1);}}
+.loc-chip{
+  margin-top:12px;display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:13px;
+}
+.loc-chip .pin{color:var(--accent);}
+.loc-chip .txt{flex:1;}
+.loc-chip .txt b{display:block;font-size:13.5px;}
+.loc-chip .txt small{color:var(--text-soft);font-size:11.5px;}
+.range-tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(23,217,180,0.14);color:var(--teal);}
+.range-tag.out{background:rgba(255,84,112,0.14);color:var(--danger);}
+.search-row{margin-top:10px;position:relative;}
+.search-row input{
+  width:100%;padding:11px 14px 11px 38px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:14px;
+}
+.search-row .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-soft);}
+
+/* ---------------- hero / offers ---------------- */
+.offers{padding:16px;overflow-x:auto;display:flex;gap:12px;scroll-snap-type:x mandatory;}
+.offer-card{
+  scroll-snap-align:start;flex-shrink:0;width:82%;border-radius:var(--radius);padding:18px;
+  background:linear-gradient(135deg,#2A1608,#1A1030);border:1px solid var(--border);position:relative;overflow:hidden;
+}
+.offer-card.alt{background:linear-gradient(135deg,#0C2620,#0B0E14);}
+.offer-card h3{font-size:18px;color:#fff;max-width:70%;}
+.offer-card p{color:#C9CEDA;font-size:12.5px;margin-top:5px;max-width:75%;}
+.offer-emoji{position:absolute;right:12px;top:14px;font-size:38px;opacity:0.9;}
+
+/* ---------------- categories ---------------- */
+.cats{padding:4px 16px 6px;display:flex;gap:9px;overflow-x:auto;}
+.cat-chip{
+  flex-shrink:0;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);font-size:13.5px;font-weight:600;color:var(--text-soft);
+  transition:all .15s;
+}
+.cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.cat-chip .ic{font-size:16px;}
+
+/* ---------------- section ---------------- */
+.section{padding:14px 16px 6px;}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.section-title h2{font-size:17px;}
+.section-title span{font-size:12px;color:var(--text-soft);}
+
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.vcard{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+  animation:cardIn .35s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.vcard .thumb{
+  height:84px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;
+}
+.vcard .rating{
+  position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.55);color:#fff;font-size:10.5px;font-weight:700;
+  padding:2px 6px;border-radius:8px;display:flex;align-items:center;gap:3px;
+}
+.vcard .info{padding:10px 11px 12px;}
+.vcard h3{font-size:13.5px;line-height:1.25;min-height:34px;}
+.vcard .meta{font-size:11px;color:var(--text-soft);margin-top:4px;}
+.vcard .dist{font-size:11px;color:var(--teal);font-weight:600;margin-top:3px;}
+.vcard .dist.far{color:var(--danger);}
+.vcard .addbtn{
+  margin-top:9px;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:8px;border-radius:9px;font-weight:700;font-size:12.5px;transition:transform .1s;
+}
+.vcard .addbtn:active{transform:scale(0.96);}
+.vcard .addbtn.disabled{opacity:0.4;pointer-events:none;}
+.vcard.disabled{opacity:0.5;}
+
+/* ---------------- bottom sheet (shared) ---------------- */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:80;
+}
+.sheet-overlay.open{opacity:1;pointer-events:auto;}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);
+  border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.9,.3,1);z-index:85;
+  max-height:85vh;display:flex;flex-direction:column;
+}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:3px;margin:10px auto 4px;}
+.sheet-head{padding:6px 18px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.sheet-head h2{font-size:17px;}
+.sheet-close{width:30px;height:30px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.sheet-body{padding:14px 18px;overflow-y:auto;}
+
+/* location sheet */
+.area-opt{
+  display:flex;justify-content:space-between;align-items:center;padding:12px 10px;border-radius:10px;
+  border:1px solid var(--border);margin-bottom:8px;font-size:13.5px;
+}
+.area-opt .d{font-size:11.5px;color:var(--text-soft);}
+.area-opt.sel{border-color:var(--accent);background:rgba(255,122,69,0.08);}
+.area-opt.oor .d{color:var(--danger);}
+
+/* item picker sheet */
+.item-row{
+  display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);
+}
+.item-row:last-child{border-bottom:none;}
+.item-name{font-size:14px;}
+.item-price{font-size:12px;color:var(--text-soft);}
+.stepper{display:flex;align-items:center;gap:10px;}
+.stepper button{
+  width:28px;height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-weight:700;
+}
+.stepper .qv{min-width:16px;text-align:center;font-weight:700;}
+.addsmall{
+  background:var(--accent);color:#fff;padding:7px 16px;border-radius:8px;font-weight:700;font-size:12.5px;
+}
+
+/* cart sheet */
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);gap:10px;}
+.cart-item .nm{font-size:14px;}
+.cart-item .shop{font-size:11px;color:var(--text-soft);}
+.cart-summary{margin-top:12px;}
+.sumrow{display:flex;justify-content:space-between;font-size:13.5px;color:var(--text-soft);padding:3px 0;}
+.sumrow.final{font-weight:800;color:var(--text);font-size:16.5px;border-top:1px dashed var(--border);padding-top:10px;margin-top:6px;}
+.primary-btn{
+  width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;padding:14px;
+  border-radius:12px;font-weight:800;font-size:15px;margin-top:12px;transition:transform .1s;
+}
+.primary-btn:active{transform:scale(0.98);}
+.primary-btn:disabled{opacity:0.35;}
+.ghost-btn{width:100%;background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:12px;font-weight:700;font-size:14px;margin-top:8px;}
+.empty-state{text-align:center;color:var(--text-soft);font-size:13.5px;padding:34px 10px;}
+.empty-state .em{font-size:30px;display:block;margin-bottom:8px;}
+
+/* checkout form */
+.field{margin-bottom:12px;}
+.field label{font-size:12px;color:var(--text-soft);display:block;margin-bottom:5px;}
+.field input,.field textarea{
+  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);
+  color:var(--text);font-size:14px;
+}
+.pay-row{display:flex;gap:8px;margin:10px 0 4px;}
+.pay-opt{flex:1;border:1px solid var(--border);border-radius:10px;padding:11px 6px;text-align:center;font-size:12px;font-weight:700;color:var(--text-soft);}
+.pay-opt.sel{border-color:var(--accent);color:var(--accent);background:rgba(255,122,69,0.08);}
+
+/* confirm / track */
+.confirm-wrap{text-align:center;padding:6px 0 10px;}
+.tick-ring{
+  width:64px;height:64px;border-radius:50%;background:rgba(23,217,180,0.14);color:var(--teal);
+  display:flex;align-items:center;justify-content:center;font-size:30px;margin:6px auto 14px;
+  animation:tickPop .4s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes tickPop{0%{transform:scale(0.3);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.track{margin-top:18px;text-align:left;}
+.track-step{display:flex;gap:11px;align-items:flex-start;padding:9px 0;}
+.track-dot{width:11px;height:11px;border-radius:50%;background:var(--border);margin-top:4px;flex-shrink:0;}
+.track-step.done .track-dot{background:var(--teal);box-shadow:0 0 0 4px rgba(23,217,180,0.15);}
+.track-step .lbl{font-size:13.5px;font-weight:600;}
+.track-step .sub{font-size:11.5px;color:var(--text-soft);}
+
+/* ---------------- bottom nav ---------------- */
+.bottomnav{
+  position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;
+  background:rgba(20,25,38,0.95);backdrop-filter:blur(10px);border-top:1px solid var(--border);
+  display:flex;z-index:60;padding:8px 4px 10px;
+}
+:root[data-theme="light"] .bottomnav{background:rgba(255,255,255,0.95);}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;
+  color:var(--text-soft);font-size:10.5px;font-weight:600;border-radius:10px;
+}
+.nav-btn .ic{font-size:19px;}
+.nav-btn.active{color:var(--accent);}
+
+/* footer note within scroll (orders tab empty) */
+.section-note{color:var(--text-soft);font-size:12.5px;padding:0 16px 20px;}
+
+/* toast */
+.toast{
+  position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;
+  font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:120;display:flex;align-items:center;gap:8px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+::-webkit-scrollbar{height:0;width:0;}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-mark">कृष्टो</div>
+  <div class="splash-sub">BUXAR · 70KM · SUPER APP</div>
+  <div class="splash-dots"><span class="splash-dot"></span><span class="splash-dot"></span><span class="splash-dot"></span></div>
+</div>
+
+<div id="authScreen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0B0E14,#1A1030 60%,#2A1608);z-index:970;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;color:var(--text);">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div class="brand-mark" style="margin:0 auto 10px;">क</div>
+      <h2 style="font-size:20px;">Krishto में आपका स्वागत है</h2>
+      <p style="color:var(--text-soft);font-size:12.5px;margin-top:4px;">बक्सर की सुपर ऐप — मोबाइल नंबर से लॉगिन/रजिस्टर करें</p>
+    </div>
+
+    <div id="authStepPhone">
+      <div class="field"><label>मोबाइल नंबर</label><input id="authPhone" maxlength="10" placeholder="10 अंकों का नंबर" inputmode="numeric"></div>
+      <button class="primary-btn" id="sendOtpBtn">OTP भेजें</button>
+    </div>
+
+    <div id="authStepOtp" style="display:none;">
+      <div id="otpHint" style="font-size:12px;color:var(--teal);margin-bottom:10px;"></div>
+      <div class="field"><label>OTP डालें</label><input id="authOtp" maxlength="4" placeholder="4 अंकों का OTP" inputmode="numeric"></div>
+      <button class="primary-btn" id="verifyOtpBtn">वेरिफ़ाई करें</button>
+      <button class="ghost-btn" id="changeNumBtn">नंबर बदलें</button>
+    </div>
+
+    <div id="authStepName" style="display:none;">
+      <div style="font-size:13px;color:var(--text-soft);margin-bottom:10px;">यह नया नंबर है — रजिस्ट्रेशन पूरा करें</div>
+      <div class="field"><label>आपका नाम</label><input id="authName" placeholder="पूरा नाम"></div>
+      <button class="primary-btn" id="completeRegBtn">रजिस्टर करके शुरू करें</button>
+    </div>
+
+    <div style="font-size:10.5px;color:var(--text-soft);text-align:center;margin-top:14px;">यह डेमो लॉगिन है (OTP यहीं दिख जाएगा) — असली SMS OTP भेजने के लिए बैकएंड से एक SMS गेटवे (जैसे MSG91/Twilio) जोड़ना ज़रूरी है।</div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="profileOverlay"></div>
+<div class="sheet" id="profileSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2>मेरी प्रोफ़ाइल</h2><button class="sheet-close" data-close="profile">✕</button></div>
+  <div class="sheet-body">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div class="brand-mark" style="width:46px;height:46px;font-size:20px;">👤</div>
+      <div><div style="font-weight:700;font-size:15px;" id="profileName"></div><div style="font-size:12.5px;color:var(--text-soft);" id="profilePhone"></div></div>
+    </div>
+    <div style="background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:14px;padding:16px;color:#fff;margin-bottom:16px;">
+      <div style="font-size:12px;opacity:0.9;">वॉलेट बैलेंस</div>
+      <div style="font-family:'Space Grotesk';font-size:26px;font-weight:700;" id="walletBalanceDisplay">₹0</div>
+      <div style="font-size:11px;opacity:0.85;margin-top:3px;">रिफंड और कैंसल किए ऑर्डर यहीं जुड़ते हैं</div>
+    </div>
+    <div class="field"><label>राशि जोड़ें (₹)</label><input id="addMoneyAmt" type="number" placeholder="जैसे: 200"></div>
+    <button class="ghost-btn" id="upiTopupBtn" style="margin-top:0;">📱 UPI ऐप से भरें (असली लिंक)</button>
+    <button class="ghost-btn" id="demoTopupBtn">⚡ डेमो में तुरंत जोड़ें</button>
+    <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">असली पैसे वॉलेट में तभी जुड़ने चाहिए जब बैकएंड पेमेंट गेटवे से पुष्टि आए — अभी यह डेमो सिम्युलेशन है।</div>
+    <button class="primary-btn" id="logoutBtn" style="margin-top:20px;background:var(--surface2);color:var(--danger);">लॉगआउट करें</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-mark">क</div>
+        <div class="brand-name">Krishto</div>
+      </div>
+      <button class="icon-btn" id="profileBtn">👤</button>
+      <button class="icon-btn" id="cartIconBtn">🛒<span class="badge" id="cartBadge" style="display:none;">0</span></button>
+    </div>
+    <button class="loc-chip" id="openLocSheet" style="width:100%;text-align:left;">
+      <span class="pin">📍</span>
+      <span class="txt"><b id="locName">बक्सर शहर</b><small id="locSub">डिलीवर हो रहा है यहाँ</small></span>
+      <span class="range-tag" id="rangeTag">इन रेंज</span>
+    </button>
+    <button class="loc-chip" id="walletChip" style="width:100%;text-align:left;margin-top:8px;">
+      <span class="pin">👛</span>
+      <span class="txt"><b>वॉलेट बैलेंस</b><small>रिफंड यहीं जुड़ता है</small></span>
+      <span class="range-tag" id="walletTag">₹0</span>
+    </button>
+    <div class="search-row">
+      <span class="ic">🔍</span>
+      <input id="searchBox" placeholder="रेस्टोरेंट, किराना, दवा खोजें">
+    </div>
+  </div>
+
+  <div class="offers">
+    <div class="offer-card"><div class="offer-emoji">🎉</div><h3>पहला ऑर्डर फ्री डिलीवरी</h3><p>₹300+ के ऑर्डर पर पूरे बक्सर ज़िले में</p></div>
+    <div class="offer-card alt"><div class="offer-emoji">⚡</div><h3>10 मिनट किराना</h3><p>बक्सर शहर में इंस्टैंट डिलीवरी</p></div>
+    <div class="offer-card"><div class="offer-emoji">💊</div><h3>24×7 दवा डिलीवरी</h3><p>70 किमी दायरे में मेडिकल सहायता</p></div>
+  </div>
+
+  <div class="cats" id="catRow"></div>
+
+  <div id="sections"></div>
+
+  <div id="ordersTab" style="display:none;"></div>
+
+  <div class="bottomnav">
+    <button class="nav-btn active" data-tab="home"><span class="ic">🏠</span>होम</button>
+    <button class="nav-btn" data-tab="food"><span class="ic">🍱</span>खाना</button>
+    <button class="nav-btn" data-tab="grocery"><span class="ic">🥬</span>किराना</button>
+    <button class="nav-btn" data-tab="orders"><span class="ic">📦</span>ऑर्डर</button>
+    <button class="nav-btn" id="navCart" data-tab="cart"><span class="ic">🛒</span>कार्ट</button>
+  </div>
+</div>
+
+<!-- location sheet -->
+<div class="sheet-overlay" id="locOverlay"></div>
+<div class="sheet" id="locSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2>अपना इलाका चुनें</h2><button class="sheet-close" data-close="loc">✕</button></div>
+  <div class="sheet-body">
+    <button class="primary-btn" id="useLiveLoc" style="margin-top:0;">📡 लाइव लोकेशन इस्तेमाल करें</button>
+    <div id="liveLocMsg" style="font-size:12px;color:var(--text-soft);margin-top:8px;"></div>
+    <div style="font-size:11.5px;color:var(--text-soft);margin:14px 0 8px;">या इलाका मैन्युअल चुनें</div>
+    <div id="areaList"></div>
+  </div>
+</div>
+
+<!-- item picker sheet -->
+<div class="sheet-overlay" id="itemOverlay"></div>
+<div class="sheet" id="itemSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 id="itemSheetTitle">मेन्यू</h2><button class="sheet-close" data-close="item">✕</button></div>
+  <div class="sheet-body" id="itemList"></div>
+</div>
+
+<!-- cart / checkout / confirm sheet -->
+<div class="sheet-overlay" id="cartOverlay"></div>
+<div class="sheet" id="cartSheet" style="max-height:88vh;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 id="cartSheetTitle">आपका कार्ट</h2><button class="sheet-close" data-close="cart">✕</button></div>
+  <div class="sheet-body">
+    <div id="cartView">
+      <div id="cartItemsWrap"></div>
+      <div class="cart-summary" id="cartSummary"></div>
+      <button class="primary-btn" id="toCheckoutBtn" disabled>चेकआउट करें →</button>
+    </div>
+
+    <div id="checkoutView" style="display:none;">
+      <button class="ghost-btn" id="backToCartBtn" style="margin-bottom:12px;">← कार्ट पर वापस</button>
+      <div class="field"><label>पूरा नाम</label><input id="custName" placeholder="जैसे: रोहित कुमार"></div>
+      <div class="field"><label>मोबाइल नंबर</label><input id="custPhone" placeholder="10 अंकों का नंबर"></div>
+      <div class="field"><label>डिलीवरी पता</label><textarea id="custAddr" rows="2" placeholder="गाँव/मोहल्ला, बक्सर ज़िला"></textarea></div>
+      <label style="font-size:12px;color:var(--text-soft);">पेमेंट तरीका</label>
+      <div class="pay-row">
+        <div class="pay-opt sel" data-pay="cod">💵 COD</div>
+        <div class="pay-opt" data-pay="upi">📱 UPI</div>
+        <div class="pay-opt" data-pay="wallet">👛 वॉलेट</div>
+        <div class="pay-opt" data-pay="card">💳 कार्ड</div>
+      </div>
+      <div id="upiBox" style="display:none;">
+        <div class="field"><label>आपकी UPI ID</label><input id="upiId" placeholder="name@bank"></div>
+        <button class="ghost-btn" id="payUpiBtn" style="margin-top:0;">📱 UPI ऐप में पेमेंट खोलें</button>
+        <div style="font-size:11px;color:var(--text-soft);margin-top:6px;">डेमो लिंक है — असली दुकान के लिए रजिस्टर्ड पेमेंट गेटवे (जैसे Razorpay/UPI) लगाना होगा।</div>
+      </div>
+      <button class="primary-btn" id="placeOrderBtn">ऑर्डर कन्फर्म करें</button>
+    </div>
+
+    <div id="confirmView" style="display:none;">
+      <div class="confirm-wrap">
+        <div class="tick-ring">✓</div>
+        <h2 style="font-size:19px;">ऑर्डर मिल गया!</h2>
+        <p style="color:var(--text-soft);font-size:13px;margin-top:6px;" id="confirmSub"></p>
+      </div>
+      <div class="track" id="trackSteps"></div>
+      <button class="primary-btn" id="newOrderBtn" style="margin-top:18px;">नया ऑर्डर करें</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= data ================= */
+const CENTER={lat:25.5642,lng:83.9773};
+const MAX_RANGE=70;
+
+const AREAS=[
+  {name:"बक्सर शहर",lat:25.5642,lng:83.9773},
+  {name:"डुमरांव",lat:25.5537,lng:84.1497},
+  {name:"चौसा",lat:25.5333,lng:84.0500},
+  {name:"राजपुर",lat:25.5980,lng:83.8850},
+  {name:"सिमरी",lat:25.4370,lng:84.0210},
+  {name:"इटाढ़ी",lat:25.4500,lng:84.1330},
+  {name:"नावानगर",lat:25.4790,lng:84.1670},
+  {name:"कोइलवर (भोजपुर)",lat:25.5540,lng:84.7250},
+  {name:"आरा (भोजपुर)",lat:25.5562,lng:84.6621},
+  {name:"बलिया (UP)",lat:25.7592,lng:84.1487},
+  {name:"मोहनियाँ (कैमूर)",lat:25.2000,lng:83.6500},
+  {name:"सासाराम",lat:24.9500,lng:84.0200},
+  {name:"पटना",lat:25.5941,lng:85.1376},
+];
+
+function haversine(a,b){
+  const R=6371,toRad=d=>d*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat),dLng=toRad(b.lng-a.lng);
+  const x=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+const CATS=[
+  {id:"grocery",ic:"🍚",label:"किराना"},
+  {id:"fashion",ic:"👕",label:"फैशन"},
+  {id:"electronics",ic:"📱",label:"मोबाइल/इलेक्ट्रॉनिक्स"},
+  {id:"food",ic:"🍔",label:"खाना"},
+  {id:"beauty",ic:"💄",label:"ब्यूटी"},
+  {id:"pharmacy",ic:"💊",label:"दवा"},
+  {id:"stationery",ic:"📚",label:"किताब/स्टेशनरी"},
+  {id:"hardware",ic:"🔧",label:"हार्डवेयर"},
+  {id:"home",ic:"🏠",label:"घर/किचन"},
+  {id:"baby",ic:"👶",label:"बेबी/किड्स"},
+  {id:"jewellery",ic:"💍",label:"ज्वेलरी"},
+  {id:"autoparts",ic:"🚗",label:"ऑटो/बाइक"},
+  {id:"agri",ic:"🌱",label:"खेती/बागवानी"},
+  {id:"gifts",ic:"🎁",label:"गिफ्ट/डेकोर"},
+  {id:"services",ic:"🏪",label:"लोकल सर्विस"},
+  {id:"taxi",ic:"🚕",label:"कैब/टैक्सी"},
+  {id:"anything",ic:"📦",label:"कुछ भी मंगाओ"},
+];
+
+const CABS=[
+  {id:"auto",name:"ऑटो",ic:"🛺",base:20,perKm:9,eta:"4-6 मि"},
+  {id:"bike",name:"बाइक टैक्सी",ic:"🏍️",base:15,perKm:6,eta:"3-5 मि"},
+  {id:"sedan",name:"सेडान कैब",ic:"🚗",base:45,perKm:14,eta:"6-9 मि"},
+  {id:"suv",name:"SUV / बड़ी गाड़ी",ic:"🚙",base:70,perKm:19,eta:"8-12 मि"},
+];
+const DRIVER_NAMES=["रवि कुमार","सुनील यादव","मनोज सिंह","अजय पासवान","विकास राय","दीपक तिवारी"];
+let selectedCabId="auto", cabDestIdx=1;
+
+const VENDORS=[
+  {id:1,cat:"food",name:"लिट्टी चोखा घर",area:"बक्सर शहर",lat:25.566,lng:83.981,rating:4.3,time:"25-30 मि",tag:"बेस्टसेलर",ic:"🍛"},
+  {id:2,cat:"food",name:"गंगा ढाबा",area:"बक्सर शहर",lat:25.592,lng:83.958,rating:4.1,time:"30-35 मि",tag:"नॉन-वेज",ic:"🍲"},
+  {id:3,cat:"food",name:"डुमरांव स्वाद भोज",area:"डुमरांव",lat:25.552,lng:84.148,rating:4.4,time:"35-40 मि",tag:"थाली",ic:"🍚"},
+  {id:4,cat:"food",name:"आरा बिरयानी हाउस",area:"आरा",lat:25.557,lng:84.660,rating:4.2,time:"50-60 मि",tag:"ट्रेंडिंग",ic:"🍗"},
+  {id:5,cat:"food",name:"पटना टेस्ट किचन",area:"पटना",lat:25.594,lng:85.137,rating:4.5,time:"—",tag:"दूर",ic:"🍜"},
+  {id:15,cat:"food",name:"बक्सर पिज़्ज़ा कॉर्नर",area:"बक्सर शहर",lat:25.569,lng:83.984,rating:4.3,time:"28-34 मि",tag:"पिज़्ज़ा",ic:"🍕"},
+  {id:16,cat:"food",name:"गंगा किनारे मोमो पॉइंट",area:"बक्सर शहर",lat:25.563,lng:83.970,rating:4.5,time:"15-20 मि",tag:"मोमो/चाउमीन",ic:"🥟"},
+  {id:17,cat:"food",name:"डुमरांव पिज़्ज़ा & बर्गर",area:"डुमरांव",lat:25.556,lng:84.152,rating:4.0,time:"32-38 मि",tag:"पिज़्ज़ा",ic:"🍕"},
+  {id:18,cat:"food",name:"राजपुर मोमो जंक्शन",area:"राजपुर",lat:25.596,lng:83.888,rating:4.2,time:"20-26 मि",tag:"मोमो",ic:"🥟"},
+  {id:6,cat:"grocery",name:"सत्तू भंडार एक्सप्रेस",area:"बक्सर शहर",lat:25.560,lng:83.972,rating:4.6,time:"12-18 मि",tag:"इंस्टैंट",ic:"🌾"},
+  {id:7,cat:"grocery",name:"किसान फ्रेश मार्ट",area:"राजपुर",lat:25.601,lng:83.884,rating:4.0,time:"20-25 मि",tag:"ताज़ा सब्ज़ी",ic:"🥕"},
+  {id:8,cat:"grocery",name:"चौसा डेली नीड्स",area:"चौसा",lat:25.535,lng:84.049,rating:4.1,time:"22-28 मि",tag:"राशन",ic:"🧺"},
+  {id:9,cat:"grocery",name:"नावानगर किराना क्लब",area:"नावानगर",lat:25.479,lng:84.166,rating:3.9,time:"28-34 मि",tag:"डेयरी",ic:"🥛"},
+  {id:10,cat:"pharmacy",name:"बक्सर सिटी मेडिकल",area:"बक्सर शहर",lat:25.567,lng:83.978,rating:4.7,time:"15-20 मि",tag:"24×7",ic:"⚕️"},
+  {id:11,cat:"pharmacy",name:"इटाढ़ी हेल्थ स्टोर",area:"इटाढ़ी",lat:25.450,lng:84.133,rating:4.2,time:"30-35 मि",tag:"जनरल",ic:"💉"},
+  {id:12,cat:"pharmacy",name:"कोइलवर फार्मेसी",area:"कोइलवर",lat:25.554,lng:84.725,rating:4.0,time:"—",tag:"दूर",ic:"🩹"},
+  {id:13,cat:"beauty",name:"सिमरी डेली एसेंशियल्स",area:"सिमरी",lat:25.437,lng:84.021,rating:4.1,time:"25-30 मि",tag:"होम केयर",ic:"🧴"},
+  {id:14,cat:"home",name:"बलिया बॉर्डर स्टोर",area:"बलिया",lat:25.759,lng:84.149,rating:3.8,time:"40-45 मि",tag:"जनरल",ic:"🧻"},
+  {id:20,cat:"fashion",name:"बक्सर फैशन हब",area:"बक्सर शहर",lat:25.568,lng:83.975,rating:4.2,time:"40-50 मि",tag:"मेन्स/वीमेंस",ic:"👕"},
+  {id:21,cat:"fashion",name:"डुमरांव साड़ी & सूट पैलेस",area:"डुमरांव",lat:25.554,lng:84.150,rating:4.3,time:"55-65 मि",tag:"साड़ी/सूट",ic:"🥻"},
+  {id:22,cat:"electronics",name:"बक्सर मोबाइल गैलरी",area:"बक्सर शहर",lat:25.565,lng:83.979,rating:4.4,time:"30-40 मि",tag:"मोबाइल",ic:"📱"},
+  {id:23,cat:"electronics",name:"सिटी इलेक्ट्रॉनिक्स स्टोर",area:"राजपुर",lat:25.599,lng:83.886,rating:4.1,time:"60-90 मि",tag:"होम अप्लायंस",ic:"📺"},
+  {id:24,cat:"beauty",name:"ग्लो ब्यूटी कॉर्नर",area:"बक्सर शहर",lat:25.562,lng:83.977,rating:4.3,time:"25-35 मि",tag:"मेकअप/स्किनकेयर",ic:"💄"},
+  {id:25,cat:"beauty",name:"बक्सर परफ्यूम & कॉस्मेटिक्स",area:"चौसा",lat:25.536,lng:84.051,rating:4.0,time:"35-45 मि",tag:"परफ्यूम",ic:"🧴"},
+  {id:26,cat:"stationery",name:"बक्सर बुक डिपो",area:"बक्सर शहर",lat:25.570,lng:83.982,rating:4.5,time:"25-30 मि",tag:"किताबें",ic:"📚"},
+  {id:27,cat:"stationery",name:"स्टूडेंट स्टेशनरी हाउस",area:"इटाढ़ी",lat:25.451,lng:84.135,rating:4.0,time:"35-40 मि",tag:"स्टेशनरी",ic:"✏️"},
+  {id:28,cat:"hardware",name:"बक्सर हार्डवेयर स्टोर",area:"बक्सर शहर",lat:25.564,lng:83.973,rating:4.2,time:"30-40 मि",tag:"टूल्स",ic:"🔧"},
+  {id:29,cat:"hardware",name:"सिटी प्लंबिंग & पेंट सेंटर",area:"नावानगर",lat:25.480,lng:84.168,rating:3.9,time:"50-60 मि",tag:"पेंट/पाइप",ic:"🛠️"},
+  {id:30,cat:"home",name:"घर संसार बर्तन भंडार",area:"बक्सर शहर",lat:25.566,lng:83.976,rating:4.3,time:"35-45 मि",tag:"बर्तन",ic:"🍽️"},
+  {id:31,cat:"home",name:"आराम फर्नीचर हाउस",area:"डुमरांव",lat:25.557,lng:84.151,rating:4.0,time:"70-90 मि",tag:"फर्नीचर",ic:"🛋️"},
+  {id:32,cat:"baby",name:"नन्हे मुन्ने बेबी स्टोर",area:"बक्सर शहर",lat:25.563,lng:83.980,rating:4.5,time:"25-35 मि",tag:"बेबी केयर",ic:"👶"},
+  {id:33,cat:"baby",name:"किड्स टॉय ज़ोन",area:"राजपुर",lat:25.597,lng:83.887,rating:4.1,time:"30-40 मि",tag:"टॉयज़",ic:"🧸"},
+  {id:34,cat:"jewellery",name:"बक्सर ज्वेलर्स",area:"बक्सर शहर",lat:25.567,lng:83.981,rating:4.6,time:"40-50 मि",tag:"गोल्ड/सिल्वर",ic:"💍"},
+  {id:35,cat:"jewellery",name:"फैशन एक्सेसरीज़ कॉर्नर",area:"चौसा",lat:25.534,lng:84.048,rating:4.0,time:"35-45 मि",tag:"आर्टिफिशियल",ic:"⌚"},
+  {id:36,cat:"autoparts",name:"बाइक स्पेयर पार्ट्स हब",area:"बक्सर शहर",lat:25.569,lng:83.978,rating:4.2,time:"30-40 मि",tag:"बाइक पार्ट्स",ic:"🏍️"},
+  {id:37,cat:"autoparts",name:"कार एक्सेसरीज़ सेंटर",area:"आरा",lat:25.558,lng:84.661,rating:4.0,time:"—",tag:"कार",ic:"🚗"},
+  {id:38,cat:"agri",name:"किसान बीज भंडार",area:"सिमरी",lat:25.438,lng:84.022,rating:4.3,time:"40-50 मि",tag:"बीज/खाद",ic:"🌾"},
+  {id:39,cat:"agri",name:"हरियाली नर्सरी",area:"इटाढ़ी",lat:25.449,lng:84.132,rating:4.1,time:"45-55 मि",tag:"पौधे",ic:"🌱"},
+  {id:40,cat:"gifts",name:"बक्सर गिफ्ट गैलरी",area:"बक्सर शहर",lat:25.565,lng:83.975,rating:4.4,time:"30-40 मि",tag:"गिफ्ट्स",ic:"🎁"},
+  {id:41,cat:"gifts",name:"डेकोर एंड मोर",area:"डुमरांव",lat:25.555,lng:84.149,rating:4.0,time:"45-55 मि",tag:"डेकोरेशन",ic:"🎈"},
+  {id:42,cat:"services",name:"मास्टर टेलर शॉप",area:"बक्सर शहर",lat:25.566,lng:83.979,rating:4.5,time:"आज/कल",tag:"टेलरिंग",ic:"✂️"},
+  {id:43,cat:"services",name:"सिटी सैलून & लॉन्ड्री",area:"बक्सर शहर",lat:25.564,lng:83.977,rating:4.2,time:"आज/कल",tag:"सैलून/लॉन्ड्री",ic:"🧺"},
+];
+
+const ITEMS_BY_VENDOR={
+  1:[["लिट्टी चोखा (4 पीस)",90],["सत्तू शरबत",40],["बैंगन भर्ता थाली",130]],
+  2:[["देसी चिकन करी",180],["रोटी (5 पीस)",50],["दाल तड़का",70]],
+  3:[["वेज थाली",120],["पनीर सब्ज़ी",140],["जीरा राइस",80]],
+  4:[["चिकन बिरयानी",190],["मटन बिरयानी",260],["रायता",30]],
+  5:[["वेज थुकपा",160],["मोमोज़ (8 पीस)",120]],
+  15:[["मार्गेरिटा पिज़्ज़ा (मीडियम)",199],["फार्महाउस पिज़्ज़ा (मीडियम)",249],["गार्लिक ब्रेड",99],["चीज़ी फ्राइज़",89]],
+  16:[["वेज मोमो (8 पीस)",70],["चिकन मोमो (8 पीस)",110],["चाउमीन",90],["मंचूरियन",100]],
+  17:[["पेपरोनी पिज़्ज़ा (मीडियम)",279],["चीज़ बर्स्ट पिज़्ज़ा",289],["वेज बर्गर",89],["चिकन बर्गर",129]],
+  18:[["स्टीम मोमो (8 पीस)",70],["फ्राइड मोमो (8 पीस)",90],["चिली मोमो",100]],
+  6:[["सत्तू 1kg",90],["चना दाल 1kg",110],["सरसों तेल 1L",165]],
+  7:[["ताज़ी सब्ज़ी किट",99],["आलू 2kg",60],["प्याज़ 2kg",70]],
+  8:[["चावल 5kg",280],["आटा 5kg",220],["नमक + मसाला किट",95]],
+  9:[["दूध 1L",58],["ब्रेड",40],["अंडे (6)",48]],
+  10:[["पैरासिटामोल स्ट्रिप",25],["ORS पैकेट",20],["फर्स्ट एड किट",199]],
+  11:[["बीपी मशीन",899],["थर्मामीटर",120],["मल्टीविटामिन",250]],
+  12:[["एंटासिड",45],["बैंडेज सेट",60]],
+  13:[["साबुन पैक (3)",90],["शैम्पू 200ml",145],["टूथपेस्ट",55]],
+  14:[["डिटर्जेंट 1kg",110],["डिशवॉश लिक्विड",95]],
+  20:[["मेन्स शर्ट",399],["जींस",699],["कुर्ती",349],["जूते",599]],
+  21:[["साड़ी",899],["सूट सेट",649],["ब्लाउज़ पीस",199]],
+  22:[["चार्जर",249],["ईयरफोन",399],["टेम्पर्ड ग्लास",99],["मोबाइल कवर",149]],
+  23:[["टेबल फैन",1299],["मिक्सर ग्राइंडर",1899],["इलेक्ट्रिक केतली",699]],
+  24:[["मेकअप किट",349],["स्किनकेयर क्रीम",199],["फेस वॉश",129]],
+  25:[["परफ्यूम",299],["डियोड्रेंट",149],["हेयर ऑयल",120]],
+  26:[["कॉपी सेट (5)",120],["स्कूल बैग",499],["नोटबुक",40]],
+  27:[["पेन सेट",60],["पेंसिल बॉक्स",90],["आर्ट & क्राफ्ट किट",249]],
+  28:[["नट्स & बोल्ट्स सेट",149],["दरवाज़े का लॉक",349],["नल (टैप)",199]],
+  29:[["पेंट 1L",349],["पाइप फिटिंग",129],["इलेक्ट्रिकल वायर (10m)",249]],
+  30:[["कुकवेयर सेट",899],["बेडशीट",349],["पर्दा (2 पीस)",449]],
+  31:[["प्लास्टिक कुर्सी",349],["सिंगल मैट्रेस",1999],["क्लीनिंग किट",199]],
+  32:[["डायपर पैक",349],["बेबी क्लॉथ्स सेट",449],["फीडिंग बॉटल",199]],
+  33:[["टॉय कार",249],["बिल्डिंग ब्लॉक्स",399],["सॉफ्ट टॉय",299]],
+  34:[["सिल्वर पायल",1499],["आर्टिफिशियल नेकलेस सेट",699],["इयररिंग्स",349]],
+  35:[["चूड़ी सेट",249],["घड़ी (वॉच)",599],["सनग्लासेस",349]],
+  36:[["हेलमेट",899],["इंजन ऑयल 1L",349],["बाइक चेन",449]],
+  37:[["कार सीट कवर",1299],["एयर फ्रेशनर",149],["कार कवर",999]],
+  38:[["सब्ज़ी बीज पैक",99],["खाद 1kg",129],["गार्डन टूल सेट",349]],
+  39:[["इंडोर प्लांट पॉट",249],["फूल के बीज",79],["वॉटरिंग कैन",199]],
+  40:[["बर्थडे गिफ्ट कॉम्बो",499],["ग्रीटिंग कार्ड",49],["फ्लावर बुके",349]],
+  41:[["बैलून डेकोरेशन किट",399],["LED लाइट्स",249],["फोटो फ्रेम",199]],
+  42:[["शर्ट स्टिचिंग",250],["ब्लाउज़ स्टिचिंग",200],["अल्टरेशन",100]],
+  43:[["हेयरकट",100],["लॉन्ड्री वॉश (प्रति किलो)",40],["आयरनिंग सर्विस (प्रति पीस)",10]],
+};
+
+/* ================= state ================= */
+let cart=[];
+let userLoc=AREAS[0];
+let activeCat="food";
+let payMethod="cod";
+let activeVendorId=null;
+
+try{const s=localStorage.getItem("krishto_cart_v2"); if(s) cart=JSON.parse(s);}catch(e){}
+try{const s=localStorage.getItem("krishto_area_v2"); if(s){const f=AREAS.find(a=>a.name===s); if(f) userLoc=f;}}catch(e){}
+
+function saveCart(){try{localStorage.setItem("krishto_cart_v2",JSON.stringify(cart));}catch(e){}}
+function saveLoc(){try{localStorage.setItem("krishto_area_v2",userLoc.name);}catch(e){}}
+function dist(a,b){return haversine(a,b);}
+
+/* ================= auth + wallet + orders state ================= */
+let currentUser=null;      // {phone,name}
+let walletBalance=0;
+let orders=[];
+let pendingOtp=null, pendingPhone=null;
+
+try{const s=localStorage.getItem("krishto_currentuser_v2"); if(s) currentUser=JSON.parse(s);}catch(e){}
+try{const s=localStorage.getItem("krishto_wallet_v2"); if(s) walletBalance=parseFloat(s)||0;}catch(e){}
+try{const s=localStorage.getItem("krishto_orders_v2"); if(s) orders=JSON.parse(s);}catch(e){}
+
+function getUsersDB(){ try{return JSON.parse(localStorage.getItem("krishto_users_v2")||"{}");}catch(e){return {};} }
+function saveUsersDB(db){ try{localStorage.setItem("krishto_users_v2",JSON.stringify(db));}catch(e){} }
+function saveCurrentUser(){ try{localStorage.setItem("krishto_currentuser_v2",JSON.stringify(currentUser));}catch(e){} }
+function saveWallet(){ try{localStorage.setItem("krishto_wallet_v2",String(walletBalance));}catch(e){} }
+function saveOrders(){ try{localStorage.setItem("krishto_orders_v2",JSON.stringify(orders));}catch(e){} }
+
+function updateWalletUI(){
+  document.getElementById("walletTag").textContent="₹"+walletBalance;
+  const wbd=document.getElementById("walletBalanceDisplay");
+  if(wbd) wbd.textContent="₹"+walletBalance;
+}
+function updateProfileUI(){
+  if(!currentUser) return;
+  document.getElementById("profileName").textContent=currentUser.name;
+  document.getElementById("profilePhone").textContent="+91 "+currentUser.phone;
+  updateWalletUI();
+}
+
+/* ---- auth screen flow ---- */
+function showAuthScreen(){ document.getElementById("authScreen").style.display="flex"; }
+function hideAuthScreen(){ document.getElementById("authScreen").style.display="none"; }
+function resetAuthSteps(){
+  document.getElementById("authStepPhone").style.display="block";
+  document.getElementById("authStepOtp").style.display="none";
+  document.getElementById("authStepName").style.display="none";
+  document.getElementById("authPhone").value="";
+  document.getElementById("authOtp").value="";
+  document.getElementById("authName").value="";
+}
+document.getElementById("sendOtpBtn").addEventListener("click",()=>{
+  const phone=document.getElementById("authPhone").value.trim();
+  if(!/^\d{10}$/.test(phone)){ showToast("सही 10 अंकों का मोबाइल नंबर डालें"); return; }
+  pendingPhone=phone;
+  pendingOtp=String(Math.floor(1000+Math.random()*9000));
+  document.getElementById("otpHint").textContent=`डेमो OTP: ${pendingOtp} (असली ऐप में यह SMS से आएगा)`;
+  document.getElementById("authStepPhone").style.display="none";
+  document.getElementById("authStepOtp").style.display="block";
+  showToast("OTP भेजा गया (डेमो)");
+});
+document.getElementById("changeNumBtn").addEventListener("click",resetAuthSteps);
+document.getElementById("verifyOtpBtn").addEventListener("click",()=>{
+  const otp=document.getElementById("authOtp").value.trim();
+  if(otp!==pendingOtp){ showToast("गलत OTP — फिर से कोशिश करें"); return; }
+  const db=getUsersDB();
+  if(db[pendingPhone]){
+    currentUser={phone:pendingPhone,name:db[pendingPhone]};
+    saveCurrentUser();
+    showToast(`वापसी पर स्वागत है, ${currentUser.name}!`);
+    afterLogin();
+  }else{
+    document.getElementById("authStepOtp").style.display="none";
+    document.getElementById("authStepName").style.display="block";
+  }
+});
+document.getElementById("completeRegBtn").addEventListener("click",()=>{
+  const name=document.getElementById("authName").value.trim();
+  if(!name){ showToast("अपना नाम डालें"); return; }
+  const db=getUsersDB();
+  db[pendingPhone]=name;
+  saveUsersDB(db);
+  currentUser={phone:pendingPhone,name};
+  saveCurrentUser();
+  showToast(`रजिस्ट्रेशन हो गया, ${name}! स्वागत है`);
+  afterLogin();
+});
+function afterLogin(){
+  hideAuthScreen();
+  updateProfileUI();
+}
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+  currentUser=null;
+  try{localStorage.removeItem("krishto_currentuser_v2");}catch(e){}
+  closeSheet("profile");
+  resetAuthSteps();
+  showAuthScreen();
+});
+document.getElementById("profileBtn").addEventListener("click",()=>{ updateProfileUI(); openSheet("profile"); });
+
+/* ---- wallet top-up ---- */
+document.getElementById("demoTopupBtn").addEventListener("click",()=>{
+  const amt=parseFloat(document.getElementById("addMoneyAmt").value);
+  if(!amt||amt<=0){ showToast("सही राशि डालें"); return; }
+  walletBalance+=amt; saveWallet(); updateWalletUI();
+  showToast(`₹${amt} वॉलेट में जुड़े (डेमो)`);
+  document.getElementById("addMoneyAmt").value="";
+});
+document.getElementById("upiTopupBtn").addEventListener("click",()=>{
+  const amt=parseFloat(document.getElementById("addMoneyAmt").value);
+  if(!amt||amt<=0){ showToast("सही राशि डालें"); return; }
+  const link=`upi://pay?pa=krishtowallet@upi&pn=Krishto%20Wallet&am=${amt}&cu=INR&tn=WalletTopup`;
+  window.location.href=link;
+  showToast("UPI ऐप खोला जा रहा है — पेमेंट के बाद ऊपर 'डेमो में तुरंत जोड़ें' दबाएँ");
+});
+
+/* ---- orders history + refund ---- */
+function recordOrder(order){
+  orders.unshift(Object.assign({id:Date.now()+Math.floor(Math.random()*999),date:new Date().toLocaleString("hi-IN"),status:"placed"},order));
+  saveOrders();
+}
+function refundOrder(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o || o.status!=="placed") return;
+  o.status="cancelled";
+  walletBalance+=o.total;
+  saveOrders(); saveWallet(); updateWalletUI();
+  renderOrdersTab();
+  showToast(`₹${o.total} वॉलेट में रिफंड हो गया`);
+}
+window.refundOrder=refundOrder;
+function renderOrdersTab(){
+  const wrap=document.getElementById("ordersTab");
+  if(orders.length===0){
+    wrap.innerHTML=`<div class="section"><div class="section-title"><h2>मेरे ऑर्डर</h2></div></div>
+      <div class="empty-state"><span class="em">📦</span>अभी कोई ऑर्डर नहीं है<br>कुछ ऑर्डर करके यहाँ ट्रैक करें</div>`;
+    return;
+  }
+  wrap.innerHTML=`<div class="section"><div class="section-title"><h2>मेरे ऑर्डर</h2><span>${orders.length} ऑर्डर</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${orders.map(o=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div>
+              <div style="font-weight:700;font-size:13.5px;">${o.label}</div>
+              <div style="font-size:11.5px;color:var(--text-soft);margin-top:2px;">${o.summary}</div>
+              <div style="font-size:11px;color:var(--text-soft);margin-top:4px;">${o.date} · ${o.paymentMethod}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:800;">₹${o.total}</div>
+              <div style="font-size:10.5px;margin-top:3px;color:${o.status==='cancelled'?'var(--danger)':'var(--teal)'};">${o.status==='cancelled'?'कैंसल · रिफंड हुआ':'प्लेस हुआ'}</div>
+            </div>
+          </div>
+          ${o.status==='placed'?`<button class="ghost-btn" style="margin-top:10px;padding:8px;font-size:12.5px;" onclick="refundOrder(${o.id})">रिफंड लो (कैंसल करें)</button>`:''}
+        </div>`).join("")}
+    </div></div>`;
+}
+
+/* ================= splash ================= */
+window.addEventListener("load",()=>{
+  setTimeout(()=>{
+    document.getElementById("splash").classList.add("hide");
+    if(!currentUser) showAuthScreen();
+    else updateProfileUI();
+  },900);
+});
+
+/* ================= categories ================= */
+const catRow=document.getElementById("catRow");
+CATS.forEach(c=>{
+  const b=document.createElement("button");
+  b.className="cat-chip"+(c.id===activeCat?" active":"");
+  b.innerHTML=`<span class="ic">${c.ic}</span>${c.label}`;
+  b.addEventListener("click",()=>{
+    activeCat=c.id;
+    document.getElementById("searchBox").value="";
+    document.querySelectorAll(".cat-chip").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+    document.querySelector(`.nav-btn[data-tab="${c.id}"]`)?.classList.add("active");
+    setTab("shop");
+    renderCurrentTab();
+  });
+  catRow.appendChild(b);
+});
+function renderCurrentTab(){
+  if(activeCat==="taxi") renderTaxi();
+  else if(activeCat==="anything") renderAnything();
+  else renderVendors();
+}
+
+/* bottom nav */
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const tab=btn.dataset.tab;
+    document.getElementById("searchBox").value="";
+    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    if(tab==="cart"){ openSheet("cart"); return; }
+    if(tab==="orders"){ setTab("orders"); renderOrdersTab(); return; }
+    if(tab==="home"){ setTab("shop"); activeCat="food"; syncCatChip(); renderCurrentTab(); return; }
+    activeCat=tab; syncCatChip(); setTab("shop"); renderCurrentTab();
+  });
+});
+function syncCatChip(){
+  document.querySelectorAll(".cat-chip").forEach(x=>x.classList.toggle("active", x.textContent.includes(CATS.find(c=>c.id===activeCat).label)));
+}
+function setTab(t){
+  document.getElementById("sections").style.display = t==="shop" ? "block":"none";
+  document.getElementById("ordersTab").style.display = t==="orders" ? "block":"none";
+  document.querySelector(".offers").style.display = (t==="shop" && activeCat!=="taxi" && activeCat!=="anything") ? "flex":"none";
+  document.querySelector(".cats").style.display = t==="shop" ? "flex":"none";
+}
+
+/* ================= vendors render ================= */
+const sectionsWrap=document.getElementById("sections");
+function renderVendors(){
+  const q=document.getElementById("searchBox").value.trim().toLowerCase();
+  if(q.length>0){ renderSearchResults(q); return; }
+  const catInfo=CATS.find(c=>c.id===activeCat);
+  let list=VENDORS.filter(v=>v.cat===activeCat);
+  list.sort((a,b)=>dist(userLoc,a)-dist(userLoc,b));
+
+  sectionsWrap.innerHTML=`<div class="section">
+    <div class="section-title"><h2>${catInfo.ic} ${catInfo.label}</h2><span>${userLoc.name} के पास</span></div>
+    <div class="vgrid" id="vgrid"></div>
+  </div>`;
+  renderVendorGrid(list, null);
+}
+
+function renderSearchResults(q){
+  setTab("shop");
+  const matches=[];
+  VENDORS.forEach(v=>{
+    const items=ITEMS_BY_VENDOR[v.id]||[];
+    const matchedItems=items.filter(it=>it[0].toLowerCase().includes(q));
+    const vendorNameMatch = v.name.toLowerCase().includes(q) || v.area.toLowerCase().includes(q);
+    const catLabel=(CATS.find(c=>c.id===v.cat)||{}).label||"";
+    if(matchedItems.length>0 || vendorNameMatch || catLabel.toLowerCase().includes(q)){
+      matches.push({v, hit: matchedItems.length? matchedItems[0][0] : (vendorNameMatch? v.name : catLabel)});
+    }
+  });
+  matches.sort((a,b)=>dist(userLoc,a.v)-dist(userLoc,b.v));
+
+  sectionsWrap.innerHTML=`<div class="section">
+    <div class="section-title"><h2>🔍 "${q}" के लिए रिज़ल्ट</h2><span>${matches.length} मिले</span></div>
+    <div class="vgrid" id="vgrid"></div>
+  </div>`;
+  document.querySelector(".offers").style.display="none";
+  if(matches.length===0){
+    document.getElementById("vgrid").innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><span class="em">🤷</span>कुछ नहीं मिला<br>"कुछ भी मंगाओ" टैब से रिक्वेस्ट भेजें</div>`;
+    return;
+  }
+  renderVendorGrid(matches.map(m=>m.v), matches.reduce((a,m)=>{a[m.v.id]=m.hit;return a;},{}));
+}
+
+function renderVendorGrid(list, hitMap){
+  const grid=document.getElementById("vgrid");
+  list.forEach((v,i)=>{
+    const d=dist(userLoc,v);
+    const inRange=d<=MAX_RANGE;
+    const card=document.createElement("div");
+    card.className="vcard"+(inRange?"":" disabled");
+    card.style.animationDelay=(i*0.03)+"s";
+    const hitLine = hitMap ? `<div class="meta">मैच: ${hitMap[v.id]}</div>` : `<div class="meta">${v.tag} · ${inRange?v.time:"रेंज से बाहर"}</div>`;
+    card.innerHTML=`
+      <div class="thumb">${v.ic}<span class="rating">⭐ ${v.rating}</span></div>
+      <div class="info">
+        <h3>${v.name}</h3>
+        ${hitLine}
+        <div class="dist ${inRange?"":"far"}">${v.area} · ${d.toFixed(1)} किमी</div>
+        <button class="addbtn ${inRange?"":"disabled"}" data-vendor="${v.id}">${inRange?"मेन्यू देखें":"अनुपलब्ध"}</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll(".addbtn").forEach(btn=>{
+    btn.addEventListener("click",()=>openItemSheet(+btn.dataset.vendor));
+  });
+}
+
+/* ================= taxi/cab booking ================= */
+function renderTaxi(){
+  const destOptions = AREAS.map((a,i)=>`<option value="${i}" ${i===cabDestIdx?"selected":""}>${a.name}</option>`).join("");
+  sectionsWrap.innerHTML=`<div class="section">
+    <div class="section-title"><h2>🚕 कैब / टैक्सी बुक करें</h2><span>पिकअप: ${userLoc.name}</span></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--text-soft);display:block;margin-bottom:6px;">कहाँ जाना है?</label>
+      <select id="cabDest" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;">${destOptions}</select>
+    </div>
+    <div id="cabList" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <button class="primary-btn" id="bookCabBtn" style="margin-top:16px;">कैब बुक करें →</button>
+  </div>`;
+  const renderCabList=()=>{
+    const destIdx=+document.getElementById("cabDest").value;
+    cabDestIdx=destIdx;
+    const destArea=AREAS[destIdx];
+    const km=Math.max(1, dist(userLoc.lat?userLoc:CENTER, destArea));
+    const list=document.getElementById("cabList");
+    list.innerHTML=CABS.map(c=>{
+      const fare=Math.round(c.base + c.perKm*km);
+      const sel=c.id===selectedCabId;
+      return `<div class="area-opt ${sel?"sel":""}" data-cab="${c.id}" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">${c.ic}</span>
+          <div><div style="font-weight:700;">${c.name}</div><div class="d">${c.eta} · ${km.toFixed(1)} किमी</div></div>
+        </div>
+        <div style="font-weight:800;">₹${fare}</div>
+      </div>`;
+    }).join("");
+    list.querySelectorAll("[data-cab]").forEach(el=>{
+      el.addEventListener("click",()=>{ selectedCabId=el.dataset.cab; renderCabList(); });
+    });
+  };
+  document.getElementById("cabDest").addEventListener("change",renderCabList);
+  renderCabList();
+  document.getElementById("bookCabBtn").addEventListener("click",()=>{
+    const destArea=AREAS[cabDestIdx];
+    const km=Math.max(1, dist(userLoc.lat?userLoc:CENTER, destArea));
+    const cab=CABS.find(c=>c.id===selectedCabId);
+    const fare=Math.round(cab.base + cab.perKm*km);
+    const driver=DRIVER_NAMES[Math.floor(Math.random()*DRIVER_NAMES.length)];
+    const vehicleNo="BR 03 "+String.fromCharCode(65+Math.floor(Math.random()*26))+String.fromCharCode(65+Math.floor(Math.random()*26))+" "+(1000+Math.floor(Math.random()*8999));
+    openBookingConfirm({
+      title:"कैब बुक हो गई!",
+      sub:`${cab.name} · ₹${fare} · ${driver} · ${vehicleNo}`,
+      steps:[
+        ["ड्राइवर मिल गया","अभी"],
+        [driver+" आ रहे हैं","लगभग "+cab.eta],
+        ["सवारी शुरू","पिकअप पर"],
+        [destArea.name+" पहुँचना","अनुमानित "+Math.ceil(km/0.5)+" मिनट"],
+      ],
+      orderRecord:{label:"कैब बुकिंग", summary:`${cab.name} · ${userLoc.name} → ${destArea.name}`, total:fare, paymentMethod:"कैश (राइड के बाद)"}
+    });
+  });
+}
+
+/* ================= kuch bhi mangao (order anything) ================= */
+function renderAnything(){
+  sectionsWrap.innerHTML=`<div class="section">
+    <div class="section-title"><h2>📦 कुछ भी मंगाओ</h2><span>${userLoc.name}</span></div>
+    <p style="font-size:13px;color:var(--text-soft);margin:0 0 14px;">दुकान की लिस्ट में नहीं मिला? जो भी सामान चाहिए उसका नाम लिखें — डिलीवरी पार्टनर बक्सर के बाज़ार से लाकर देगा।</p>
+    <div class="field"><label>क्या मंगाना है?</label><textarea id="anyItem" rows="2" placeholder="जैसे: 2 किलो आम, एक छाता, बच्चों की कॉपी-किताब..."></textarea></div>
+    <div class="field"><label>अनुमानित बजट (₹)</label><input id="anyBudget" type="number" placeholder="जैसे: 300"></div>
+    <div class="field"><label>डिलीवरी पता</label><textarea id="anyAddr" rows="2" placeholder="गाँव/मोहल्ला, बक्सर ज़िला"></textarea></div>
+    <button class="primary-btn" id="sendAnyBtn">रिक्वेस्ट भेजें →</button>
+  </div>`;
+  document.getElementById("sendAnyBtn").addEventListener("click",()=>{
+    const item=document.getElementById("anyItem").value.trim();
+    const budget=document.getElementById("anyBudget").value.trim();
+    const addr=document.getElementById("anyAddr").value.trim();
+    if(!item||!addr){ showToast("क्या मंगाना है और पता ज़रूर लिखें"); return; }
+    openBookingConfirm({
+      title:"रिक्वेस्ट भेज दी गई!",
+      sub:`"${item}" · बजट ₹${budget||"—"} · डिलीवरी पार्टनर असाइन हो रहा है`,
+      steps:[
+        ["रिक्वेस्ट मिली","अभी"],
+        ["पार्टनर असाइन हो रहा है","1-2 मिनट में"],
+        ["सामान खरीदा जा रहा है","बाज़ार से"],
+        ["आपके पते पर डिलीवर","अनुमानित 40-60 मिनट"],
+      ],
+      orderRecord:{label:"कुछ भी मंगाओ", summary:item, total:parseFloat(budget)||0, paymentMethod:"कैश ऑन डिलीवरी"}
+    });
+  });
+}
+
+/* shared confirm sheet for taxi + anything */
+function openBookingConfirm({title,sub,steps,orderRecord}){
+  if(orderRecord) recordOrder(orderRecord);
+  document.getElementById("cartView").style.display="none";
+  document.getElementById("checkoutView").style.display="none";
+  document.getElementById("confirmView").style.display="block";
+  document.getElementById("cartSheetTitle").textContent=title;
+  document.querySelector("#confirmView h2").textContent=title;
+  document.getElementById("confirmSub").textContent=sub;
+  document.getElementById("trackSteps").innerHTML=steps.map((s,i)=>
+    `<div class="track-step ${i<2?"done":""}"><div class="track-dot"></div><div><div class="lbl">${s[0]}</div><div class="sub">${s[1]}</div></div></div>`
+  ).join("");
+  openSheet("cart");
+}
+
+/* ================= location sheet ================= */
+const locOverlay=document.getElementById("locOverlay"), locSheet=document.getElementById("locSheet");
+function renderAreaList(){
+  const wrap=document.getElementById("areaList");
+  wrap.innerHTML="";
+  AREAS.forEach(a=>{
+    const d=dist(CENTER,a);
+    const inRange=d<=MAX_RANGE;
+    const row=document.createElement("div");
+    row.className="area-opt"+(a.name===userLoc.name?" sel":"")+(inRange?"":" oor");
+    row.innerHTML=`<div><div>${a.name}</div><div class="d">${d.toFixed(1)} किमी ${inRange?"— रेंज में":"— 70 किमी सीमा से बाहर"}</div></div>${a.name===userLoc.name?"✓":""}`;
+    row.addEventListener("click",()=>{
+      userLoc=a; saveLoc(); updateLocUI(); renderVendors(); closeSheet("loc");
+      showToast(`लोकेशन बदली: ${a.name}`);
+    });
+    wrap.appendChild(row);
+  });
+}
+document.getElementById("openLocSheet").addEventListener("click",()=>{renderAreaList(); openSheet("loc");});
+document.getElementById("walletChip").addEventListener("click",()=>{ updateProfileUI(); openSheet("profile"); });
+
+document.getElementById("useLiveLoc").addEventListener("click",()=>{
+  const msg=document.getElementById("liveLocMsg");
+  if(!navigator.geolocation){
+    msg.textContent="❌ इस ब्राउज़र में लाइव लोकेशन सपोर्ट नहीं है।";
+    return;
+  }
+  msg.textContent="📡 लोकेशन खोजी जा रही है...";
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const live={name:"आपकी लाइव लोकेशन",lat:pos.coords.latitude,lng:pos.coords.longitude};
+      const d=dist(CENTER,live);
+      userLoc=live; saveLoc(); updateLocUI(); renderVendors();
+      msg.textContent = d<=MAX_RANGE
+        ? `✅ मिल गई! बक्सर सेंटर से ${d.toFixed(1)} किमी — डिलीवरी उपलब्ध है।`
+        : `⚠️ आप बक्सर सेंटर से ${d.toFixed(1)} किमी दूर हैं — यह 70 किमी सीमा से बाहर है।`;
+      showToast("लाइव लोकेशन लागू हुई");
+      setTimeout(()=>closeSheet("loc"),1200);
+    },
+    err=>{
+      if(err.code===1) msg.textContent="❌ लोकेशन परमिशन नहीं दी गई। ब्राउज़र सेटिंग में लोकेशन ऑन करें, या नीचे से इलाका चुनें।";
+      else msg.textContent="❌ लोकेशन नहीं मिल पाई। कृपया नीचे से इलाका चुनें।";
+    },
+    {enableHighAccuracy:true,timeout:8000}
+  );
+});
+
+function updateLocUI(){
+  document.getElementById("locName").textContent=userLoc.name;
+  const d=dist(CENTER,userLoc);
+  const tag=document.getElementById("rangeTag");
+  if(d<=MAX_RANGE){
+    tag.textContent=d.toFixed(0)+" किमी · इन रेंज"; tag.classList.remove("out");
+    document.getElementById("locSub").textContent="डिलीवर हो रहा है यहाँ";
+  }else{
+    tag.textContent=d.toFixed(0)+" किमी · आउट"; tag.classList.add("out");
+    document.getElementById("locSub").textContent="70 किमी सीमा से बाहर";
+  }
+}
+
+/* ================= item sheet ================= */
+const itemOverlay=document.getElementById("itemOverlay"), itemSheet=document.getElementById("itemSheet");
+function openItemSheet(vendorId){
+  activeVendorId=vendorId;
+  const v=VENDORS.find(x=>x.id===vendorId);
+  document.getElementById("itemSheetTitle").textContent=v.icon? v.icon:v.name;
+  document.getElementById("itemSheetTitle").textContent=v.name;
+  renderItemList();
+  openSheet("item");
+}
+function qtyInCart(vendorId,itemName){
+  const c=cart.find(c=>c.vendorId===vendorId&&c.item===itemName);
+  return c?c.qty:0;
+}
+function renderItemList(){
+  const v=VENDORS.find(x=>x.id===activeVendorId);
+  const items=ITEMS_BY_VENDOR[activeVendorId]||[];
+  const wrap=document.getElementById("itemList");
+  wrap.innerHTML=items.map(([name,price])=>{
+    const q=qtyInCart(activeVendorId,name);
+    return `<div class="item-row">
+      <div><div class="item-name">${name}</div><div class="item-price">₹${price}</div></div>
+      <div id="stepper-${name.replace(/[^a-zA-Z0-9]/g,"")}">
+        ${q>0?
+          `<div class="stepper">
+            <button data-act="dec" data-name="${name}" data-price="${price}">−</button>
+            <span class="qv">${q}</span>
+            <button data-act="inc" data-name="${name}" data-price="${price}">+</button>
+          </div>`
+          :
+          `<button class="addsmall" data-act="inc" data-name="${name}" data-price="${price}">जोड़ें</button>`
+        }
+      </div>
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll("[data-act]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const name=btn.dataset.name, price=+btn.dataset.price;
+      if(btn.dataset.act==="inc") addToCart(v,name,price);
+      else decFromCart(v.id,name);
+      renderItemList();
+    });
+  });
+}
+
+/* ================= cart logic ================= */
+function addToCart(vendor,itemName,price){
+  const existing=cart.find(c=>c.vendorId===vendor.id&&c.item===itemName);
+  if(existing) existing.qty++;
+  else cart.push({vendorId:vendor.id,vendorName:vendor.name,item:itemName,price,qty:1});
+  saveCart(); refreshCartUI(); bumpBadge();
+  showToast(`${itemName} जोड़ा गया`);
+}
+function decFromCart(vendorId,itemName){
+  const idx=cart.findIndex(c=>c.vendorId===vendorId&&c.item===itemName);
+  if(idx<0) return;
+  cart[idx].qty--;
+  if(cart[idx].qty<=0) cart.splice(idx,1);
+  saveCart(); refreshCartUI();
+}
+function changeQty(idx,delta){
+  cart[idx].qty+=delta;
+  if(cart[idx].qty<=0) cart.splice(idx,1);
+  saveCart(); refreshCartUI();
+}
+window.changeQty=changeQty;
+
+function cartTotals(){
+  const itemsTotal=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const inRange=dist(CENTER,userLoc)<=MAX_RANGE;
+  const deliveryFee = cart.length && inRange ? (itemsTotal>=300?0:35) : 0;
+  return {itemsTotal,deliveryFee,total:itemsTotal+deliveryFee};
+}
+
+function bumpBadge(){
+  const b=document.getElementById("cartBadge");
+  b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump");
+}
+
+function refreshCartUI(){
+  const count=cart.reduce((s,c)=>s+c.qty,0);
+  const badge=document.getElementById("cartBadge");
+  badge.textContent=count;
+  badge.style.display=count>0?"flex":"none";
+
+  const wrap=document.getElementById("cartItemsWrap");
+  if(cart.length===0){
+    wrap.innerHTML=`<div class="empty-state"><span class="em">🛒</span>कार्ट खाली है<br>कुछ स्वादिष्ट ऑर्डर करें!</div>`;
+  }else{
+    wrap.innerHTML=cart.map((c,i)=>`
+      <div class="cart-item">
+        <div><div class="nm">${c.item}</div><div class="shop">${c.vendorName} · ₹${c.price}</div></div>
+        <div class="stepper">
+          <button onclick="changeQty(${i},-1)">−</button>
+          <span class="qv">${c.qty}</span>
+          <button onclick="changeQty(${i},1)">+</button>
+        </div>
+      </div>`).join("");
+  }
+  const t=cartTotals();
+  document.getElementById("cartSummary").innerHTML = cart.length ? `
+    <div class="sumrow"><span>आइटम टोटल</span><span>₹${t.itemsTotal}</span></div>
+    <div class="sumrow"><span>डिलीवरी शुल्क</span><span>${t.deliveryFee===0?"फ्री":"₹"+t.deliveryFee}</span></div>
+    <div class="sumrow final"><span>कुल राशि</span><span>₹${t.total}</span></div>
+  ` : "";
+  document.getElementById("toCheckoutBtn").disabled=cart.length===0;
+}
+
+/* ================= sheet plumbing ================= */
+function openSheet(which){
+  const map={loc:[locOverlay,locSheet], item:[itemOverlay,itemSheet], cart:[document.getElementById("cartOverlay"),document.getElementById("cartSheet")], profile:[document.getElementById("profileOverlay"),document.getElementById("profileSheet")]};
+  map[which][0].classList.add("open");
+  map[which][1].classList.add("open");
+}
+function closeSheet(which){
+  const map={loc:[locOverlay,locSheet], item:[itemOverlay,itemSheet], cart:[document.getElementById("cartOverlay"),document.getElementById("cartSheet")], profile:[document.getElementById("profileOverlay"),document.getElementById("profileSheet")]};
+  map[which][0].classList.remove("open");
+  map[which][1].classList.remove("open");
+}
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeSheet(b.dataset.close)));
+locOverlay.addEventListener("click",()=>closeSheet("loc"));
+itemOverlay.addEventListener("click",()=>closeSheet("item"));
+document.getElementById("cartOverlay").addEventListener("click",()=>closeSheet("cart"));
+document.getElementById("profileOverlay").addEventListener("click",()=>closeSheet("profile"));
+document.getElementById("cartIconBtn").addEventListener("click",()=>openSheet("cart"));
+
+/* checkout flow within cart sheet */
+document.getElementById("toCheckoutBtn").addEventListener("click",()=>{
+  document.getElementById("cartView").style.display="none";
+  document.getElementById("checkoutView").style.display="block";
+  document.getElementById("cartSheetTitle").textContent="चेकआउट";
+});
+document.getElementById("backToCartBtn").addEventListener("click",()=>{
+  document.getElementById("checkoutView").style.display="none";
+  document.getElementById("cartView").style.display="block";
+  document.getElementById("cartSheetTitle").textContent="आपका कार्ट";
+});
+document.querySelectorAll(".pay-opt").forEach(el=>{
+  el.addEventListener("click",()=>{
+    document.querySelectorAll(".pay-opt").forEach(x=>x.classList.remove("sel"));
+    el.classList.add("sel"); payMethod=el.dataset.pay;
+    document.getElementById("upiBox").style.display = payMethod==="upi" ? "block":"none";
+  });
+});
+document.getElementById("payUpiBtn").addEventListener("click",()=>{
+  const upiId=document.getElementById("upiId").value.trim();
+  if(!upiId||!upiId.includes("@")){ showToast("सही UPI ID डालें (जैसे name@bank)"); return; }
+  const t=cartTotals();
+  const link=`upi://pay?pa=${encodeURIComponent(upiId)}&pn=Krishto&am=${t.total}&cu=INR&tn=KrishtoOrder`;
+  window.location.href=link;
+  showToast("UPI ऐप खोला जा रहा है...");
+});
+document.getElementById("placeOrderBtn").addEventListener("click",()=>{
+  const name=document.getElementById("custName").value.trim();
+  const phone=document.getElementById("custPhone").value.trim();
+  const addr=document.getElementById("custAddr").value.trim();
+  if(!name||!phone||!addr){ showToast("नाम, नंबर और पता ज़रूर भरें"); return; }
+  const t=cartTotals();
+  if(payMethod==="wallet"){
+    if(walletBalance<t.total){ showToast(`वॉलेट में ₹${(t.total-walletBalance).toFixed(0)} कम हैं — पहले पैसे जोड़ें`); return; }
+    walletBalance-=t.total; saveWallet(); updateWalletUI();
+  }
+  const payLabel = payMethod==="cod"?"कैश ऑन डिलीवरी": payMethod==="wallet"?"वॉलेट":payMethod.toUpperCase();
+  const summary = cart.map(c=>`${c.item} x${c.qty}`).join(", ");
+  recordOrder({label:"ऑर्डर", summary, total:t.total, paymentMethod:payLabel});
+  document.getElementById("checkoutView").style.display="none";
+  document.getElementById("confirmView").style.display="block";
+  document.getElementById("cartSheetTitle").textContent="ऑर्डर कन्फर्म";
+  document.querySelector("#confirmView h2").textContent="ऑर्डर मिल गया!";
+  document.getElementById("confirmSub").textContent=`कुल ₹${t.total} · ${payLabel}`;
+  document.getElementById("trackSteps").innerHTML=`
+    <div class="track-step done"><div class="track-dot"></div><div><div class="lbl">ऑर्डर प्राप्त हुआ</div><div class="sub">अभी</div></div></div>
+    <div class="track-step done"><div class="track-dot"></div><div><div class="lbl">तैयार हो रहा है</div><div class="sub">5-10 मिनट में</div></div></div>
+    <div class="track-step"><div class="track-dot"></div><div><div class="lbl">डिलीवरी पार्टनर निकला</div><div class="sub">जल्द अपडेट होगा</div></div></div>
+    <div class="track-step"><div class="track-dot"></div><div><div class="lbl">आपके पते पर डिलीवर</div><div class="sub">${userLoc.name}</div></div></div>`;
+  cart=[]; saveCart(); refreshCartUI();
+});
+document.getElementById("newOrderBtn").addEventListener("click",()=>{
+  document.getElementById("confirmView").style.display="none";
+  document.getElementById("cartView").style.display="block";
+  document.getElementById("cartSheetTitle").textContent="आपका कार्ट";
+  document.getElementById("custName").value="";
+  document.getElementById("custPhone").value="";
+  document.getElementById("custAddr").value="";
+  closeSheet("cart");
+});
+
+document.getElementById("searchBox").addEventListener("input",()=>{
+  const q=document.getElementById("searchBox").value.trim().toLowerCase();
+  if(q.length>0) renderSearchResults(q);
+  else renderCurrentTab();
+});
+
+/* ================= toast ================= */
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ================= init ================= */
+updateLocUI();
+setTab("shop");
+renderVendors();
+refreshCartUI();
+updateWalletUI();
+if(currentUser) updateProfileUI();
+</script>
+</body>
+</html>
